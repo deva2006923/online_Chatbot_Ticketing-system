@@ -1,0 +1,91 @@
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f8;
+    text-align:center;
+    margin:0;
+    padding:0;
+}
+
+/* Title */
+h1{
+    color:#333;
+    margin-top:20px;
+}
+
+/* Chatbox */
+#chatbox{
+    width:420px;
+    height:420px;
+    margin:20px auto;
+    background:white;
+    border-radius:12px;
+    padding:15px;
+    overflow-y:auto;
+    box-shadow:0px 0px 15px rgba(0,0,0,0.1);
+    display:flex;
+    flex-direction:column;
+}
+
+/* Bot message */
+.bot{
+    text-align:left;
+    background:#e8f0fe;
+    padding:10px;
+    border-radius:10px;
+    margin:5px;
+    max-width:75%;
+    align-self:flex-start;
+}
+
+/* User message */
+.user{
+    text-align:right;
+    background:#d4edda;
+    padding:10px;
+    border-radius:10px;
+    margin:5px;
+    max-width:75%;
+    align-self:flex-end;
+}
+
+/* Input area */
+.input-area{
+    width:420px;
+    margin:auto;
+    display:flex;
+    gap:10px;
+}
+
+/* Input box */
+#message{
+    flex:1;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    outline:none;
+}
+
+/* Button */
+button{
+    padding:12px 18px;
+    background:#007bff;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+/* Button hover */
+button:hover{
+    background:#0056b3;
+}
+
+/* Scrollbar styling (optional) */
+#chatbox::-webkit-scrollbar{
+    width:6px;
+}
+
+#chatbox::-webkit-scrollbar-thumb{
+    background:#ccc;
+    border-radius:10px;
+}

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AI Support Engineer</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:       #06090F;
+            --surface:  #0C1219;
+            --surface2: #121B26;
+            --border:   #1A2535;
+            --accent:   #00FFB2;
+            --accent2:  #0080FF;
+            --danger:   #FF4D6D;
+            --warn:     #FFB800;
+            --text:     #D0E4F7;
+            --muted:    #3D5570;
+            --mono:     'JetBrains Mono', monospace;
+            --sans:     'Syne', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+        /* ── SIDEBAR ── */
+        .sidebar { width: 270px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 14px; flex-shrink: 0; }
+        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #003580, var(--accent2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 20px rgba(0,128,255,0.3); }
+        .logo-name { font-family: var(--mono); font-size: 12px; color: var(--accent); letter-spacing: 1px; }
+        .logo-ver  { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+        .sec-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px 4px; }
+
+        .status-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+        .s-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 4px 0; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 7px; }
+        .d-green  { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: glow 2s infinite; }
+        .d-blue   { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+        .d-yellow { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+        @keyframes glow { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .badge { font-family: var(--mono); font-size: 10px; color: var(--accent); }
+
+        .session-val { font-family: var(--mono); font-size: 11px; color: var(--accent2); max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+        .side-btn { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; color: var(--muted); font-size: 12px; text-decoration: none; border: 1px solid transparent; transition: all 0.2s; cursor: pointer; background: transparent; font-family: var(--sans); width: 100%; }
+        .side-btn:hover { background: var(--surface2); border-color: var(--border); color: var(--text); }
+
+        /* ── MAIN ── */
+        .main { flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+
+        .topbar { padding: 14px 22px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .topbar-title { font-family: var(--mono); font-size: 12px; color: var(--accent); letter-spacing: 1px; }
+        .online-badge { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--accent); background: rgba(0,255,178,0.06); border: 1px solid rgba(0,255,178,0.15); padding: 5px 10px; border-radius: 20px; }
+
+        /* ── CHAT ── */
+        .chat { flex: 1; overflow-y: auto; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+        .chat::-webkit-scrollbar { width: 4px; }
+        .chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .msg-wrap-bot  { display: flex; align-items: flex-start; gap: 10px; animation: fadeUp 0.3s ease; }
+        .msg-wrap-user { display: flex; justify-content: flex-end; animation: fadeUp 0.2s ease; }
+
+        .avatar { width: 30px; height: 30px; background: linear-gradient(135deg, #003580, var(--accent2)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+
+        .bot { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 16px 18px; border-radius: 0 14px 14px 14px; max-width: 80%; line-height: 1.8; font-size: 14px; }
+        .user { background: linear-gradient(135deg, #003580, #0052CC); padding: 11px 16px; border-radius: 14px 14px 0 14px; max-width: 62%; font-size: 14px; line-height: 1.6; }
+
+        .msg-time { font-size: 10px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+        .msg-time-user { text-align: right; }
+
+        .bot h2 { color: var(--accent); font-size: 0.95rem; margin: 12px 0 7px; border-bottom: 1px solid var(--border); padding-bottom: 4px; font-family: var(--mono); }
+        .bot p  { margin-bottom: 8px; }
+        .bot ul, .bot ol { padding-left: 18px; margin-bottom: 8px; }
+        .bot li { margin-bottom: 4px; }
+        .bot code { background: var(--surface2); color: var(--accent); padding: 2px 6px; border-radius: 4px; font-family: var(--mono); font-size: 12px; }
+        .bot pre  { background: var(--surface2); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid var(--border); }
+        .bot hr   { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+        .bot strong { color: #E8F4FF; }
+        .bot blockquote { border-left: 3px solid var(--warn); padding-left: 12px; color: var(--warn); margin: 8px 0; }
+
+        .img-preview { margin-left: auto; animation: fadeUp 0.2s ease; }
+        .img-preview img { border-radius: 10px; border: 1px solid var(--accent); max-width: 200px; max-height: 140px; object-fit: cover; display: block; margin-left: auto; }
+
+        /* Typing */
+        .typing { display: flex; align-items: center; gap: 8px; color: var(--accent); font-size: 11px; font-style: italic; padding: 6px 0; animation: fadeUp 0.2s ease; font-family: var(--mono); }
+        .typing-dots { display: flex; gap: 4px; }
+        .typing-dots span { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: bounce 1.2s infinite; }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:0.3} 40%{transform:translateY(-5px);opacity:1} }
+
+        /* ── FAQ CHIPS ── */
+        .faq-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 24px 12px; }
+        .faq-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 12px; cursor: pointer; transition: all 0.2s; color: var(--text); font-family: var(--sans); }
+        .faq-chip:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,255,178,0.05); }
+
+        /* ── INPUT ── */
+        .input-area { background: var(--surface); border-top: 1px solid var(--border); padding: 14px 20px; }
+
+        .ticket-bar { display: none; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; font-size: 11px; margin-bottom: 10px; align-items: center; justify-content: space-between; }
+        .ticket-bar.visible { display: flex; }
+        .t-id { font-family: var(--mono); color: var(--accent2); }
+        .t-status { color: var(--accent); }
+
+        .input-row { display: flex; gap: 8px; align-items: center; }
+        .input-wrap { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; padding: 3px 8px 3px 14px; transition: all 0.2s; }
+        .input-wrap:focus-within { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(0,128,255,0.12); }
+        #message { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: var(--sans); font-size: 14px; padding: 10px 4px; }
+        #message::placeholder { color: var(--muted); }
+
+        .icon-btn { cursor: pointer; padding: 7px; color: var(--muted); font-size: 16px; border-radius: 6px; transition: color 0.2s; border: none; background: transparent; }
+        .icon-btn:hover { color: var(--accent); }
+        #image { display: none; }
+        .file-badge { font-size: 10px; color: var(--accent2); font-family: var(--mono); max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .send-btn { padding: 11px 20px; background: linear-gradient(135deg, var(--accent2), #003CB3); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 13px; font-family: var(--sans); transition: all 0.2s; white-space: nowrap; }
+        .send-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,128,255,0.4); }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .input-hint { font-size: 10px; color: var(--muted); margin-top: 7px; font-family: var(--mono); }
+
+        @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-icon">🤖</div>
+        <div>
+            <div class="logo-name">AI SUPPORT</div>
+            <div class="logo-ver">v6.0 · Next Level</div>
+        </div>
+    </div>
+
+    <div class="sec-label">System</div>
+    <div class="status-card">
+        <div class="s-row"><span><span class="dot d-green"></span>AI Engine</span><span class="badge">Online</span></div>
+        <div class="s-row"><span><span class="dot d-blue"></span>OCR Module</span><span class="badge">Ready</span></div>
+        <div class="s-row"><span><span class="dot d-yellow"></span>Ticket DB</span><span class="badge">Active</span></div>
+        <div class="s-row"><span><span class="dot d-green"></span>Email Alerts</span><span class="badge">On</span></div>
+    </div>
+
+    <div class="sec-label">Session</div>
+    <div class="status-card">
+        <div class="s-row"><span>User</span><span class="session-val" id="sb-user">—</span></div>
+        <div class="s-row"><span>Ticket</span><span class="session-val" id="sb-ticket">—</span></div>
+        <div class="s-row"><span>Language</span><span class="session-val" id="sb-lang">—</span></div>
+        <div class="s-row"><span>Messages</span><span class="session-val" id="sb-count">0</span></div>
+    </div>
+
+    <div class="sidebar-foot">
+        <a href="/admin" class="side-btn">📊 Admin Dashboard</a>
+        <a href="/export/csv" class="side-btn">📥 Export CSV</a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="topbar">
+        <span class="topbar-title">// LIVE TECHNICAL ASSISTANCE</span>
+        <span class="online-badge"><span class="dot d-green"></span>System Online</span>
+    </div>
+
+    <div id="chatbox" class="chat">
+        <div class="msg-wrap-bot">
+            <div class="avatar">🤖</div>
+            <div>
+                <div class="bot">
+                    👋 Hello! I'm your <strong>Senior AI Support Engineer</strong>.<br><br>
+                    I support <strong>multiple languages</strong> — feel free to write in your preferred language!<br><br>
+                    Before we begin — <strong>what's your name?</strong>
+                </div>
+                <div class="msg-time" id="init-time"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Quick Chips -->
+    <div class="faq-chips" id="faq-chips">
+        <span class="faq-chip" onclick="quickAsk('I forgot my password')">🔑 Password Reset</span>
+        <span class="faq-chip" onclick="quickAsk('I need a refund')">💳 Refund</span>
+        <span class="faq-chip" onclick="quickAsk('App is loading slowly')">🐌 Slow Loading</span>
+        <span class="faq-chip" onclick="quickAsk('I cannot login')">🚫 Login Issue</span>
+    </div>
+
+    <div class="input-area">
+        <div class="ticket-bar" id="ticket-bar">
+            <span>Active Ticket: <span class="t-id" id="active-tid">—</span></span>
+            <span class="t-status">● Open</span>
+        </div>
+        <div class="input-row">
+            <div class="input-wrap">
+                <input type="file" id="image" accept="image/*" onchange="handleFile(this)">
+                <label class="icon-btn" for="image" title="Attach screenshot">📎</label>
+                <span class="file-badge" id="file-badge"></span>
+                <input id="message" placeholder="Enter your name..." onkeypress="onKey(event)" autocomplete="off">
+            </div>
+            <button class="send-btn" id="send-btn" onclick="send()">Send ➤</button>
+        </div>
+        <div class="input-hint">Enter to send &nbsp;·&nbsp; 📎 attach screenshot &nbsp;·&nbsp; multilingual support enabled</div>
+    </div>
+</div>
+
+<script>
+    let username = "", step = 0, pendingIssue = "", msgCount = 0;
+    marked.setOptions({ breaks: true });
+
+    // Set initial timestamp
+    document.getElementById("init-time").textContent = now();
+
+    function now() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function onKey(e) { if (e.key === "Enter" && !e.shiftKey) send(); }
+    function handleFile(i) { document.getElementById("file-badge").textContent = i.files[0]?.name ? `📷 ${i.files[0].name}` : ""; }
+
+    function appendBot(html) {
+        const box = document.getElementById("chatbox");
+        const wrap = document.createElement("div");
+        wrap.className = "msg-wrap-bot";
+        wrap.innerHTML = `
+            <div class="avatar">🤖</div>
+            <div>
+                <div class="bot">${html}</div>
+                <div class="msg-time">${now()}</div>
+            </div>`;
+        box.appendChild(wrap);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function appendUser(text) {
+        const box = document.getElementById("chatbox");
+        const wrap = document.createElement("div");
+        wrap.className = "msg-wrap-user";
+        wrap.innerHTML = `
+            <div>
+                <div class="user">${text}</div>
+                <div class="msg-time msg-time-user">${now()}</div>
+            </div>`;
+        box.appendChild(wrap);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function appendImg(url) {
+        const box = document.getElementById("chatbox");
+        const div = document.createElement("div");
+        div.className = "img-preview";
+        div.innerHTML = `<img src="${url}"><div class="msg-time msg-time-user">${now()}</div>`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function showTyping() {
+        const box = document.getElementById("chatbox");
+        const div = document.createElement("div");
+        div.id = "typing-ind";
+        div.className = "typing";
+        div.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div> Analyzing...`;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function removeTyping() { document.getElementById("typing-ind")?.remove(); }
+
+    function setSession(name, ticket, lang) {
+        if (name)   { username = name; document.getElementById("sb-user").textContent = name; }
+        if (ticket) { document.getElementById("sb-ticket").textContent = ticket; document.getElementById("active-tid").textContent = ticket; document.getElementById("ticket-bar").classList.add("visible"); }
+        if (lang)   document.getElementById("sb-lang").textContent = lang;
+    }
+
+    function incMsgCount() {
+        msgCount++;
+        document.getElementById("sb-count").textContent = msgCount;
+    }
+
+    function isValidName(t) {
+        const l = t.toLowerCase().trim();
+        if (l.split(/\s+/).length > 3) return false;
+        return !["issue","problem","error","help","fail","crash","not working",
+                 "broken","bug","payment","transaction","login","cannot","unable",
+                 "please","have an","having"].some(w => l.includes(w));
+    }
+
+    function extractName(t) {
+        const m = t.match(/my name is\s+([a-zA-Z]+)/i)
+               || t.match(/i am\s+([a-zA-Z]+)/i)
+               || t.match(/call me\s+([a-zA-Z]+)/i)
+               || t.match(/this is\s+([a-zA-Z]+)/i)
+               || t.match(/name[:\s]+([a-zA-Z]+)/i);
+        return m ? m[1] : null;
+    }
+
+    function looksLikeIssue(t) {
+        const l = t.toLowerCase();
+        return ["issue","problem","error","help","fail","crash","not working","broken",
+                "bug","payment","login","cannot","unable","i have","i am having",
+                "having trouble","something wrong","not able","please help"].some(w => l.includes(w));
+    }
+
+    function smartNamePrompt(t) {
+        const l = t.toLowerCase();
+        if (l.includes("i have an issue") || l.includes("i have a problem"))
+            return `I understand you have an issue — I'm here to help! 🛠️<br><br>Before I create a ticket, could you tell me your <strong>name</strong>?`;
+        if (l.includes("help"))
+            return `Of course, I'll help you right away! 😊<br><br>First, could you share your <strong>name</strong>?`;
+        if (l.includes("error") || l.includes("fail") || l.includes("crash"))
+            return `That sounds urgent — let's get it sorted! 🔧<br><br>Just tell me your <strong>name</strong> and we'll jump into troubleshooting.`;
+        if (l.includes("payment") || l.includes("transaction"))
+            return `I can help with payment issues. 💳<br><br>Could you share your <strong>name</strong> first?`;
+        return `Got it! Sounds like you need assistance. 👍<br><br>Could you share your <strong>name</strong> so I can set up your ticket?`;
+    }
+
+    function quickAsk(text) {
+        if (step === 0) {
+            appendBot(`Please tell me your <strong>name</strong> first, then I'll help you with that! 😊`);
+            return;
+        }
+        document.getElementById("message").value = text;
+        send();
+    }
+
+    function sendToBackend(issueText, imgFile, nameOverride) {
+        const fd = new FormData();
+        fd.append("name", nameOverride || username);
+        fd.append("issue", issueText);
+        if (imgFile) fd.append("image", imgFile);
+        showTyping();
+        incMsgCount();
+        fetch("/chat", { method: "POST", body: fd })
+            .then(r => r.json())
+            .then(data => {
+                removeTyping();
+                appendBot(marked.parse(data.reply || "No response received."));
+                const m = data.reply.match(/TKT-[A-F0-9]{8}/i);
+                const l = data.reply.match(/\*\*Lang:\*\* ([A-Za-z]+)/);
+                setSession(null, m ? m[0] : null, l ? l[1] : null);
+            })
+            .catch(() => { removeTyping(); appendBot("Connection error. Please try again."); })
+            .finally(() => {
+                document.getElementById("send-btn").disabled = false;
+                document.getElementById("send-btn").textContent = "Send ➤";
+            });
+    }
+
+    function send() {
+        const m   = document.getElementById("message");
+        const img = document.getElementById("image");
+        const btn = document.getElementById("send-btn");
+        const text = m.value.trim();
+        const file = img.files[0];
+
+        if (!text && !file) return;
+
+        if (text) appendUser(text);
+        if (file) appendImg(URL.createObjectURL(file));
+
+        const capturedFile = file || null;
+        m.value = ""; img.value = "";
+        document.getElementById("file-badge").textContent = "";
+
+        // ── STEP 0: Name ──
+        if (step === 0) {
+            const extracted = extractName(text);
+            if (extracted) {
+                setSession(extracted);
+                step = 1;
+                document.getElementById("message").placeholder = "Describe your issue...";
+                setTimeout(() => appendBot(`Got it! Welcome, <strong>${extracted}</strong>! 🎯<br><br>Describe your issue and I'll get right on it.`), 300);
+                return;
+            }
+            if (looksLikeIssue(text)) {
+                pendingIssue = text;
+                setTimeout(() => appendBot(smartNamePrompt(text)), 300);
+                return;
+            }
+            if (!isValidName(text)) {
+                setTimeout(() => appendBot(`I didn't catch that as a name. Could you share just your <strong>name</strong>? (e.g. <em>Deva</em>)`), 300);
+                return;
+            }
+            // Valid name
+            setSession(text);
+            step = 1;
+            document.getElementById("message").placeholder = "Describe your issue...";
+            if (pendingIssue) {
+                setTimeout(() => appendBot(`Thanks, <strong>${text}</strong>! I've noted your issue — looking into it now... 🔍`), 300);
+                setTimeout(() => sendToBackend(pendingIssue, null, text), 900);
+                pendingIssue = "";
+            } else {
+                setTimeout(() => appendBot(`Welcome, <strong>${text}</strong>! 🎯<br><br>Describe your issue — you can also attach a screenshot using 📎.`), 300);
+            }
+            return;
+        }
+
+        // ── Name correction mid-chat ──
+        const extracted = extractName(text);
+        if (extracted) {
+            setSession(extracted);
+            setTimeout(() => appendBot(`Updated your name to <strong>${extracted}</strong>. What's the issue you're facing?`), 300);
+            return;
+        }
+
+        // ── Normal issue ──
+        btn.disabled = true;
+        btn.textContent = "Sending...";
+        sendToBackend(text, capturedFile, null);
+    }
+</script>
+</body>
+</html>

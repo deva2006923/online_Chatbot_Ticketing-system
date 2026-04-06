@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Support Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:#06090F; --surface:#0C1219; --surface2:#121B26; --border:#1A2535;
+    --accent:#00FFB2; --accent2:#0080FF; --danger:#FF4D6D; --warn:#FFB800;
+    --text:#D0E4F7; --muted:#3D5570;
+    --mono:'JetBrains Mono',monospace; --sans:'Syne',sans-serif;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--sans); background:var(--bg); color:var(--text); min-height:100vh; padding:28px; }
+
+.topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+.topbar h1 { font-family:var(--mono); color:var(--accent); font-size:1.2rem; }
+.topbar p  { color:var(--muted); font-size:11px; margin-top:3px; }
+.actions { display:flex; gap:10px; align-items:center; }
+
+.btn { padding:9px 16px; border:none; border-radius:8px; cursor:pointer; font-size:12px; font-family:var(--sans); font-weight:600; transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center; gap:5px; }
+.btn-red     { background:var(--danger); color:white; }
+.btn-red:hover { background:#e03558; }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+.btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+.btn-green   { background:rgba(0,255,178,0.1); border:1px solid rgba(0,255,178,0.2); color:var(--accent); }
+.btn-green:hover { background:rgba(0,255,178,0.15); }
+
+.live { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--accent); background:rgba(0,255,178,0.05); border:1px solid rgba(0,255,178,0.15); padding:6px 12px; border-radius:20px; font-family:var(--mono); }
+.live-dot { width:6px;height:6px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite; }
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,178,0.4)}50%{box-shadow:0 0 0 5px rgba(0,255,178,0)}}
+
+/* STATS */
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; position:relative; overflow:hidden; transition:border-color 0.2s; }
+.card:hover { border-color:var(--accent2); }
+.card::after { content:''; position:absolute; bottom:0;left:0;right:0;height:2px; }
+.c-total::after { background:var(--accent2); }
+.c-open::after  { background:var(--warn); }
+.c-done::after  { background:var(--accent); }
+.c-high::after  { background:var(--danger); }
+.card-lbl { font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:var(--mono); }
+.card-val { font-family:var(--mono);font-size:2.2rem;font-weight:700;line-height:1; }
+.c-total .card-val { color:var(--accent2); }
+.c-open  .card-val { color:var(--warn); }
+.c-done  .card-val { color:var(--accent); }
+.c-high  .card-val { color:var(--danger); }
+
+/* CHARTS */
+.charts { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
+.chart-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; }
+.chart-title { font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;font-family:var(--mono); }
+.chart-wrap  { position:relative; height:160px; }
+
+/* FILTERS */
+.filters { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
+.finput { padding:8px 13px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:var(--sans); font-size:12px; outline:none; transition:border-color 0.2s; }
+.finput:focus { border-color:var(--accent2); }
+#fsearch { width:220px; }
+.fcount { margin-left:auto; font-size:11px; color:var(--muted); font-family:var(--mono); }
+
+/* TABLE */
+.tbl-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:20px; }
+table { width:100%; border-collapse:collapse; }
+th { background:var(--surface2); color:var(--muted); padding:11px 14px; font-size:9px; text-transform:uppercase; letter-spacing:2px; font-family:var(--mono); text-align:left; }
+td { padding:12px 14px; border-bottom:1px solid var(--border); font-size:12px; vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,0.015); cursor:pointer; }
+
+.tid { font-family:var(--mono); color:var(--accent2); font-size:11px; }
+.tag { background:var(--surface2); border:1px solid var(--border); padding:3px 8px; border-radius:6px; font-size:10px; font-family:var(--mono); }
+.p-h{color:var(--danger);font-weight:700;} .p-m{color:var(--warn);font-weight:700;} .p-l{color:var(--accent);font-weight:700;}
+.s-open { background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.25);color:var(--warn);padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700; }
+.s-res  { background:rgba(0,255,178,0.08);border:1px solid rgba(0,255,178,0.25);color:var(--accent);padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700; }
+.sent-f{color:var(--danger);font-size:11px;} .sent-n{color:var(--muted);font-size:11px;} .sent-s{color:var(--accent);font-size:11px;}
+.msg-badge { background:var(--surface2);border:1px solid var(--border);padding:2px 7px;border-radius:10px;font-family:var(--mono);font-size:10px;color:var(--text); }
+
+.empty { text-align:center;padding:50px;color:var(--muted);font-size:13px; }
+.empty div { font-size:28px;margin-bottom:8px; }
+
+/* HISTORY MODAL */
+.modal-bg { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center; }
+.modal-bg.open { display:flex; }
+.modal { background:var(--surface);border:1px solid var(--border);border-radius:14px;width:560px;max-height:70vh;display:flex;flex-direction:column;overflow:hidden; }
+.modal-head { padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center; }
+.modal-head h3 { font-family:var(--mono);color:var(--accent);font-size:13px; }
+.modal-close { background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer; }
+.modal-body { overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px; }
+.h-msg-user { background:linear-gradient(135deg,#003580,#0052CC);padding:10px 14px;border-radius:10px 10px 0 10px;max-width:80%;margin-left:auto;font-size:12px;line-height:1.5; }
+.h-msg-bot  { background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 10px 10px 10px;max-width:80%;font-size:12px;line-height:1.5; }
+.h-ts { font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px; }
+.h-ts-r { text-align:right; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div>
+        <h1>📊 Support Metrics Dashboard</h1>
+        <p>Real-time ticket management · Auto-refresh every 15s</p>
+    </div>
+    <div class="actions">
+        <div class="live"><span class="live-dot"></span>Live</div>
+        <a href="/"          class="btn btn-outline">💬 Chat</a>
+        <a href="/export/csv" class="btn btn-green">📥 Export CSV</a>
+        <button class="btn btn-red" onclick="clearAll()">🗑 Clear</button>
+    </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+    <div class="card c-total"><div class="card-lbl">Total Tickets</div><div class="card-val" id="s-total">{{ total }}</div></div>
+    <div class="card c-open"> <div class="card-lbl">Open</div>         <div class="card-val" id="s-open">{{ open_t }}</div></div>
+    <div class="card c-done"> <div class="card-lbl">Resolved</div>     <div class="card-val" id="s-done">{{ resolved }}</div></div>
+    <div class="card c-high"> <div class="card-lbl">High Priority</div><div class="card-val" id="s-high">{{ high }}</div></div>
+</div>
+
+<!-- CHARTS -->
+<div class="charts">
+    <div class="chart-card">
+        <div class="chart-title">By Category</div>
+        <div class="chart-wrap"><canvas id="chartCat"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title">By Priority</div>
+        <div class="chart-wrap"><canvas id="chartPri"></canvas></div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title">By Sentiment</div>
+        <div class="chart-wrap"><canvas id="chartSent"></canvas></div>
+    </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+    <input class="finput" id="fsearch" type="text" placeholder="🔍 Search..." oninput="filterTable()">
+    <select class="finput" id="fstatus" onchange="filterTable()">
+        <option value="">All Status</option><option>Open</option><option>Resolved</option>
+    </select>
+    <select class="finput" id="fpriority" onchange="filterTable()">
+        <option value="">All Priority</option><option>High</option><option>Medium</option><option>Low</option>
+    </select>
+    <select class="finput" id="fcategory" onchange="filterTable()">
+        <option value="">All Category</option><option>Technical</option><option>Billing</option><option>General</option>
+    </select>
+    <span class="fcount" id="fcount"></span>
+</div>
+
+<!-- TABLE -->
+<div class="tbl-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Ticket ID</th><th>Name</th><th>Issue</th><th>Category</th>
+                <th>Priority</th><th>Sentiment</th><th>Status</th><th>Lang</th><th>Msgs</th><th>Date</th>
+            </tr>
+        </thead>
+        <tbody id="tbody">
+        {% for t in tickets %}
+        <tr onclick="openHistory('{{ t.ticket_id }}')"
+            data-status="{{ t.status }}" data-priority="{{ t.priority }}"
+            data-category="{{ t.category }}"
+            data-search="{{ t.ticket_id }} {{ t.name }} {{ t.issue }}">
+            <td><span class="tid">{{ t.ticket_id }}</span></td>
+            <td>{{ t.name }}</td>
+            <td><strong>{{ t.issue }}</strong></td>
+            <td><span class="tag">{{ t.category }}</span></td>
+            <td><span class="{% if t.priority=='High' %}p-h{% elif t.priority=='Medium' %}p-m{% else %}p-l{% endif %}">
+                {% if t.priority=='High' %}🔴{% elif t.priority=='Medium' %}🟡{% else %}🟢{% endif %} {{ t.priority }}
+            </span></td>
+            <td><span class="{% if t.sentiment=='Frustrated' %}sent-f{% elif t.sentiment=='Satisfied' %}sent-s{% else %}sent-n{% endif %}">
+                {% if t.sentiment=='Frustrated' %}😤{% elif t.sentiment=='Satisfied' %}😊{% else %}😐{% endif %} {{ t.sentiment }}
+            </span></td>
+            <td><span class="{% if t.status=='Open' %}s-open{% else %}s-res{% endif %}">{{ t.status }}</span></td>
+            <td style="color:var(--muted);font-size:11px;">{{ t.language or 'EN' }}</td>
+            <td><span class="msg-badge">{{ t.message_count or 1 }}</span></td>
+            <td style="color:var(--muted);font-size:11px;font-family:var(--mono);">{{ t.date }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div id="empty" class="empty" style="display:none"><div>📭</div>No tickets match your filters.</div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-bg" id="modal">
+    <div class="modal">
+        <div class="modal-head">
+            <h3 id="modal-title">Chat History</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body">Loading...</div>
+    </div>
+</div>
+
+<script>
+// ── CHARTS ──
+const catData  = {{ chart_categories | safe }};
+const priData  = {{ chart_priorities | safe }};
+const sentData = {{ chart_sentiments | safe }};
+
+const chartCfg = (labels, values, colors) => ({
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#0C1219' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#3D5570', font: { size: 10 }, padding: 10 } } } }
+});
+
+new Chart(document.getElementById("chartCat"),  chartCfg(Object.keys(catData),  Object.values(catData),  ['#0080FF','#FFB800','#00FFB2']));
+new Chart(document.getElementById("chartPri"),  chartCfg(Object.keys(priData),  Object.values(priData),  ['#FF4D6D','#FFB800','#00FFB2']));
+new Chart(document.getElementById("chartSent"), chartCfg(Object.keys(sentData), Object.values(sentData), ['#FF4D6D','#3D5570','#00FFB2']));
+
+// ── FILTER ──
+function filterTable() {
+    const s  = document.getElementById("fsearch").value.toLowerCase();
+    const st = document.getElementById("fstatus").value;
+    const pr = document.getElementById("fpriority").value;
+    const ca = document.getElementById("fcategory").value;
+    const rows = document.querySelectorAll("#tbody tr");
+    let vis = 0;
+    rows.forEach(r => {
+        const show = (!s  || r.dataset.search.toLowerCase().includes(s))
+                  && (!st || r.dataset.status === st)
+                  && (!pr || r.dataset.priority === pr)
+                  && (!ca || r.dataset.category === ca);
+        r.style.display = show ? "" : "none";
+        if (show) vis++;
+    });
+    document.getElementById("fcount").textContent = `${vis} / ${rows.length} tickets`;
+    document.getElementById("empty").style.display = vis === 0 ? "block" : "none";
+}
+
+// ── CLEAR ──
+function clearAll() {
+    if (confirm("Delete ALL tickets and chat history? This cannot be undone.")) {
+        fetch("/reset", { method: "POST" }).then(() => location.reload());
+    }
+}
+
+// ── LIVE REFRESH ──
+function liveRefresh() {
+    fetch("/api/tickets").then(r => r.json()).then(tickets => {
+        const open = tickets.filter(t => t.status === "Open").length;
+        const done = tickets.filter(t => t.status === "Resolved").length;
+        const high = tickets.filter(t => t.priority === "High").length;
+        document.getElementById("s-total").textContent = tickets.length;
+        document.getElementById("s-open").textContent  = open;
+        document.getElementById("s-done").textContent  = done;
+        document.getElementById("s-high").textContent  = high;
+
+        const pCls = p => p==="High"?"p-h":p==="Medium"?"p-m":"p-l";
+        const pIco = p => p==="High"?"🔴":p==="Medium"?"🟡":"🟢";
+        const sCls = s => s==="Frustrated"?"sent-f":s==="Satisfied"?"sent-s":"sent-n";
+        const sIco = s => s==="Frustrated"?"😤":s==="Satisfied"?"😊":"😐";
+
+        document.getElementById("tbody").innerHTML = tickets.map(t => `
+            <tr onclick="openHistory('${t.ticket_id}')"
+                data-status="${t.status}" data-priority="${t.priority}"
+                data-category="${t.category}"
+                data-search="${t.ticket_id} ${t.name} ${t.issue}">
+                <td><span class="tid">${t.ticket_id}</span></td>
+                <td>${t.name}</td>
+                <td><strong>${t.issue}</strong></td>
+                <td><span class="tag">${t.category}</span></td>
+                <td><span class="${pCls(t.priority)}">${pIco(t.priority)} ${t.priority}</span></td>
+                <td><span class="${sCls(t.sentiment)}">${sIco(t.sentiment)} ${t.sentiment}</span></td>
+                <td><span class="${t.status==='Open'?'s-open':'s-res'}">${t.status}</span></td>
+                <td style="color:var(--muted);font-size:11px;">${t.language||'EN'}</td>
+                <td><span class="msg-badge">${t.message_count||1}</span></td>
+                <td style="color:var(--muted);font-size:11px;font-family:var(--mono)">${t.date}</td>
+            </tr>`).join("");
+        filterTable();
+    }).catch(() => {});
+}
+
+// ── CHAT HISTORY MODAL ──
+function openHistory(ticketId) {
+    document.getElementById("modal-title").textContent = `Chat History — ${ticketId}`;
+    document.getElementById("modal-body").innerHTML = "Loading...";
+    document.getElementById("modal").classList.add("open");
+    fetch(`/api/history/${ticketId}`)
+        .then(r => r.json())
+        .then(msgs => {
+            if (!msgs.length) {
+                document.getElementById("modal-body").innerHTML = `<div style="color:var(--muted);text-align:center;padding:20px;">No history found.</div>`;
+                return;
+            }
+            document.getElementById("modal-body").innerHTML = msgs.map(m => m.role === "user"
+                ? `<div><div class="h-msg-user">${m.message}</div><div class="h-ts h-ts-r">${m.timestamp}</div></div>`
+                : `<div><div class="h-msg-bot">${m.message}</div><div class="h-ts">${m.timestamp}</div></div>`
+            ).join("");
+        })
+        .catch(() => { document.getElementById("modal-body").innerHTML = "Failed to load history."; });
+}
+
+function closeModal() { document.getElementById("modal").classList.remove("open"); }
+document.getElementById("modal").addEventListener("click", e => { if (e.target === document.getElementById("modal")) closeModal(); });
+
+// Init
+filterTable();
+setInterval(liveRefresh, 15000);
+</script>
+</body>
+</html>
+```
+
+---
+
